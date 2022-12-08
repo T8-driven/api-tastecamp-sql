@@ -21,10 +21,36 @@ app.get("/receitas", async (req, res) => {
 
 app.get("/receitas/:id", async (req, res) => {
   const { id } = req.params;
-  const receita = await connection.query("SELECT * FROM receitas WHERE id=$1", [
+  /* const receita = await connection.query("SELECT * FROM receitas WHERE id=$1", [
     id,
   ]);
-  res.send(receita.rows[0]);
+
+  const categoria = await connection.query(
+    "SELECT * FROM categorias WHERE id=$1",
+    [receita.rows[0].id_categoria]
+  );
+
+  // JOIN FAKE
+  const novaReceita = {
+    id: receita.rows[0].id,
+    titulo: receita.rows[0].titulo,
+    ingredientes: receita.rows[0].ingredientes,
+    categoria: categoria.rows[0].nome,
+  }; */
+
+  // JOIN sql
+  const novaReceita = await connection.query(
+    `SELECT receitas.id, receitas.titulo, receitas.ingredientes, categorias.nome AS "categoria" 
+    FROM 
+      receitas 
+    JOIN 
+      categorias 
+    ON 
+      receitas.id_categoria = categorias.id WHERE receitas.id=$1;`,
+    [id]
+  );
+
+  res.send(novaReceita.rows[0]);
 });
 
 app.post("/receitas", async (req, res) => {
