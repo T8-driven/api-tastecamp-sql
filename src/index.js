@@ -15,7 +15,15 @@ const app = express();
 app.use(express.json());
 
 app.get("/receitas", async (req, res) => {
-  const receitas = await connection.query("SELECT * FROM receitas;");
+  const receitas = await connection.query(
+    `SELECT receitas.id, receitas.titulo, receitas.ingredientes, categorias.nome AS "categoria" 
+  FROM 
+    receitas 
+  JOIN 
+    categorias 
+  ON 
+    receitas.id_categoria = categorias.id);`
+  );
   res.send(receitas.rows);
 });
 
@@ -62,6 +70,44 @@ app.post("/receitas", async (req, res) => {
   );
 
   res.send(201);
+});
+
+app.get("/categorias-receitas", async (req, res) => {
+  try {
+    const receitasCategorias = await connection.query(`
+      SELECT receitas.titulo AS "receita", categorias.nome AS "categoria" 
+        FROM receitas
+          JOIN categorias_receitas
+            ON receitas.id = categorias_receitas.id_receita
+          JOIN categorias
+            ON categorias_receitas.id_categoria = categorias.id;
+    `);
+
+    res.send(receitasCategorias.rows);
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
+});
+
+app.get("/categorias-receitas/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const receitasCategorias = await connection.query(`
+      SELECT receitas.titulo AS "receita", categorias.nome AS "categoria" 
+        FROM receitas
+          JOIN categorias_receitas
+            ON receitas.id = categorias_receitas.id_receita
+          JOIN categorias
+            ON categorias_receitas.id_categoria = categorias.id
+          WHERE receitas.id = $1;
+    `, [id]);
+
+    res.send(receitasCategorias.rows);
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
 });
 
 const port = process.env.PORT || 5000;
